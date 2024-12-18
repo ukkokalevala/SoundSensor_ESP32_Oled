@@ -1,0 +1,47 @@
+include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+// OLED setup
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// Sound sensor pin
+#define SOUND_SENSOR_PIN 4
+
+void setup() {
+  Serial.begin(115200);
+  Wire.begin(7, 6);
+  // Initialize OLED
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;);
+  }
+  display.clearDisplay();
+  display.display();
+  
+  pinMode(SOUND_SENSOR_PIN, INPUT);
+  Serial.println("Sound Waveform Visualization Starting...");
+}
+
+void loop() {
+  display.clearDisplay(); // Clear OLED display
+  
+  int waveHeight[SCREEN_WIDTH]; // Store sound values
+  
+  // Sample sound data and scale it
+  for (int x = 0; x < SCREEN_WIDTH; x++) {
+    int soundValue = analogRead(SOUND_SENSOR_PIN); // Read sound sensor
+    waveHeight[x] = map(soundValue, 0, 4095, SCREEN_HEIGHT, 0); // Scale to OLED height
+  }
+
+  // Draw the waveform
+  for (int x = 0; x < SCREEN_WIDTH - 1; x++) {
+    display.drawLine(x, waveHeight[x], x + 1, waveHeight[x + 1], SSD1306_WHITE);
+  }
+
+  display.display(); // Update OLED display
+  delay(50); // Small delay to control refresh rate
+}
